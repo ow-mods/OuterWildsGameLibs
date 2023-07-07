@@ -15,10 +15,9 @@ echo managedPath: %managedPath%
 
 set outPath=%~dp0\package\lib
 
-@REM Strip all assembiles, but keep them private.
+@REM Iterate over every assembly, checking if we should strip or just copy
 (for %%a in ("%managedpath%\*") do (
   set filename=%%~nxa
-  
   call :SUB !filename!
 ))
 
@@ -32,18 +31,22 @@ set outPath=%~dp0\package\lib
 pause
 goto :eof
 
+@REM Takes in a filename, and either strips it or copies it directly to the output folder.
 :SUB filename
 set "foundMatch=false"
+@REM Check file against all files in dontTouch
 (for %%b in (%dontTouch%) do (
   set checkDll=%%b
 	
   if "%1" == "!checkDll!" (
+    @REM Filename matches an entry in dontTouch, so just copy the dll
     xcopy "%managedPath%\%1" "%outPath%\%1" /y /v
 	goto :eof
   )
 ))
 
 if %foundMatch% == false (
+  @REM Filename doesn't match anything in dontTouch, so strip normally
   %~dp0\tools\NStrip.exe "%managedPath%\%1" -o "%outPath%\%1"
 )
 goto :eof
